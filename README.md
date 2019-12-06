@@ -1,0 +1,36 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# wavdrcast
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+This package provides forecasts of time series using a direct multistep
+model where regressors can be composed by wavelet-based signal
+estimation. A functional available in **wavdrcast** allows one to choose
+a good wavelet specification for sinal extraction considering the
+forecast criterion. The scope is not limited to wavelet regressors,
+however. In general, any other data set can be used as an exogenous
+variable, including AR components of the time series. This can be
+interesting when one is comparing the forecast property of core
+inflation measure or output gap estimators.
+
+## Installation
+
+You can install the development version from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("wavdrcast")
+devtools::install_github("nelson16silva/wavdrcast")
+```
+
+## Example
+
+``` r
+library(wavdrcast)
+```
+
+See **wdrcast**’s vignette.

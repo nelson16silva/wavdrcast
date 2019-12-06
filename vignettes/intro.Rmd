@@ -1,0 +1,395 @@
+---
+title: "Getting started with wavdrcast"
+output: rmarkdown::html_vignette
+html_vignette:
+    mathjax: local
+    self_contained: false
+vignette: >
+  %\VignetteIndexEntry{wavdrcast}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(wavdrcast)
+```
+
+# Introduction
+
+This document introduces you to `wdrcast`'s functions. Based on the forecast performance criterion, these functions are applied in evaluation of wavelet-based core inflation and output gap measures. Package `wdrcast` uses "direct" forecast, not recursive one. In this method, forecasts are made using a horizon-specific estimated model, where the dependent variable is the multi-period  ahead value being forecasted.
+
+It is assumed that you are a little familiar with core inflation and output gap literature. Before describing the examples associated with core inflation and output gap, this vignette briefly presents the general direct forecasting model used in the package. 
+
+# Model 
+
+General OLS regression model is writing as:
+
+\begin{equation}
+    x_{t + h} = \alpha + \mathbf{{\beta}}'\mathbf{x}_t + \mathbf{{\gamma}}'\mathbf{z}_t + \mathbf{{\theta}}'\mathbf{d}_t + \epsilon_{t + h} 
+\end{equation}
+
+where:
+
+* $x_{t + h}$, regressed $x$ leaded $h$ step-ahead;
+    
+
+* $\alpha$, constant;
+    
+* $\mathbf{{\beta}}' = (\beta_0, \ldots, \beta_p)$, vector of $p + 1$  coefficients;
+    
+* $\mathbf{x}_t = (x_t, \ldots, x_{t - p})'$, variable $x$ in $t$ and its $p$ lags; 
+    
+* $\mathbf{{\gamma}}' = (\gamma^1_0, \ldots, \gamma^1_{q_1}, \ldots, \gamma^n_0, \ldots, \gamma^n_{q_n}, \gamma^w_0, \ldots, \gamma^w_{q_w})$, vector of coefficients on $\mathbf{z}_t$;
+    
+* $\mathbf{z}_t = (z^1_t, \ldots, z^1_{t - q_1}, \ldots, z^n_t, \ldots, z^n_{t - q_n},  z^w_t, \ldots, z^w_{t - q_w})'$, vector of exogenous variables and its $q_i$, $i = (1, \ldots, n, w)$, lags. By convention, the exogenous variable from wavelet-based signal estimation ($z^w_t$), if included, is ordered last. Lag variables are included sequentially and selected based on BIC or AIC information criterion. Then, if $z^i_{t - q_i}$ is included, so are $z^i_{t - q_i + 1}, \ldots, z^i_{t}$. Also, some $z^i$ variables can be excluded from the final model, but at least one is presented in the general model specification; 
+    
+* $\mathbf{{\theta}}' = (\theta_1, \ldots, \theta_m)$, coefficients;
+    
+* $\mathbf{d}_t = (d_1, \ldots, d_m)'$, exogenous variables not subjected to be lagged, possibly dummy variables;
+    
+* $\epsilon_{t + h}$, white noise error term.
+
+If $x_{t + h} = y_{t + h} - y_t$, then $x_t = \Delta y_t = y_t - y_{t - 1}$ and $z^w_t = y_t - y^w_t$, where $y^w_t$ is a wavelet-based signal estimation of $y_t$. For example, if $y_t$ is the logarithm of the output, then  $z^w_t = y_t - y^w_t$ is the wavelet-base estimation of the output gap. Other variables $z^{i'}_t, i' = (1, \ldots, n)$ are never automatically differentiated, so it is a user's decision to do that or not.
+
+From this specification, it is possible to estimate particular models like:
+
+
+* AR case: 
+
+$$y_{t + h} - y_t = \alpha + \mathbf{{\beta}}\Delta \mathbf{y}_t + \epsilon_{t + h};$$ 
+
+* evaluation of the wavelet-based output gap
+
+$$y_{t + h} - y_t = \alpha + \gamma_0^w z^w_t + \epsilon_{t + h};$$
+
+* evaluation of core inflation measure that exclude food and energy 
+
+$$x_{t + h}  = \alpha + \sum^p_{i = 0}\beta_ix_{t - i} + \sum^q_{i = 0}\gamma_i z_{t - i} + \epsilon_{t + h}.$$
+
+In the last equation, it was assumed that the variable $z$ are not revised, as it is almost always the case of core inflation measure that exclude food and energy. If it is, there is a function in the package that allows one to consider cases where $z$ changes at each point in time. If $z$ is the core inflation measure from HP filter, for example, then an evaluation of the forecast property should consider that the  estimation of $z$ changes for each out-of-sample observation. If $z$ includes $z^w$, as is the case of the second equation above, then for each point in time a new estimation of $z^w$ is did automatically. 
+
+# Core Inflation
+
+In this section the forecast property of core inflation measures is evaluated. First, the wavelet core inflation is evaluated followed by the analysis of the core that exclude food and energy. Finally, an AR model is estimated and then the three models are compared. Inflation and core inflation that exclude food and energy are monthly data from 1970-01 to 2019-10 and are included in the package dataset:
+
+```{r}
+tibble::as_tibble(inf)
+```
+
+
+## Model
+
+As an initial step, the code bellow generates dummies variables:
+
+```{r echo=TRUE}
+dummies <- tibble::tibble(
+  date = seq(lubridate::ymd("1970-01-01"),
+    lubridate::ymd("2019-10-01"),
+    by = "months"
+  ),
+  month = lubridate::month(date, label = TRUE)
+) %>%
+  dplyr::mutate(var = 1) %>%
+  tidyr::spread(month, var, fill = 0) %>%
+  dplyr::select(-date, -dplyr::ends_with("dez"))
+
+dummies
+```
+
+Then, the function `model()` searches for the best OLS regression. For a wavelet specification, the model is:
+
+\begin{equation}
+    \pi_{t + h} = \alpha + \mathbf{{\beta}}'\mathbf{\pi}_t + (\mathbf{\gamma}^w)' \mathbf{\pi}^w_t + \mathbf{{\theta}}'\mathbf{d}_t + \epsilon_{t + h}, 
+\end{equation}
+where $\pi$ and $\pi^w$ are inflation and wavelet core inflation, respectively, and $\mathbf{d}$ contains the dummies.  
+
+The final model selected based on the  minimum BIC (function default) is:
+
+```{r}
+# Wavelet core inflation (wav = TRUE argument)
+
+inf_wav <- model(
+  df = inf[1], lags = c(2, 2), .h = 2,
+  wav = TRUE, xreg = dummies, a = NA, vscale = "level"
+)$model
+
+inf_wav
+```
+
+As indicated above, the regression involves cpi (`df = df[1]`), wavelet core inflation (`wav = TRUE`), and dummies (`xreg = dummies`) for two step-ahead (`.h = 2`). The maximum lags for cpi and core inflation is set to be 2 (`lags = c(2, 2)`). The wavelet core inflation is estimated from the empirical Bayes threshold method ([EbayesThresh](https://cran.r-project.org/web/packages/EbayesThresh/index.html)), with `a = NA` determining the prior for Laplace function and `vscale = "level"` controlling the scale used at levels of the transform. If `wav = TRUE`, the number of columns of the `df` argument can be one, otherwise must be greather than one, as the two following examples show. 
+
+The same procedure is made for the base core inflation (that exclude food and energy) and a model that includes only AR terms of inflation, set by the `.var = "ar"` argument:
+
+```{r}
+# Base core inflation (less food and energy)
+
+inf_core <- model(df = inf, lags = c(2, 2), .h = 2, xreg = dummies)$model
+
+# AR
+
+inf_ar <- model(df = inf, lags = c(2, 0), .h = 2, .var = "ar", xreg = dummies)
+
+```
+
+## Forecast and Error
+
+While the function `model()` selects an OLS specification based on information criteria, the function `fcast()` makes forecast from 1 to $h$ step-ahead. For each $h$ both the model and the wavelet core inflation are re-estimated. The arguments are the same as in `model()` function:  
+
+```{r}
+fcast_inf_wav <- fcast(
+df = inf[1], lags = c(2, 2), .h = 12,
+wav = TRUE, xreg = dummies, a = NA, vscale = "level")
+round(fcast_inf_wav, 4)
+
+fcast_inf_core <- fcast(df = inf, lags = c(2, 2), .h = 12, xreg = dummies)
+
+fcast_inf_ar <- fcast(df = inf, lags = c(2, 0), .h = 12, .var = "ar", xreg = dummies) 
+```
+
+A comparison of core inflation measures can be made from the root-mean-squared forecast error (RMSE) or mean absolute forecast error (MAE). The task of function `error()` is to compute this:
+
+```{r }
+rmse_inf_wav <- error(
+  df = inf[1], lags = c(2, 2), .H = 6, .K = 25,
+  wav = TRUE, xreg = dummies, a = NA, vscale = "level"
+)
+rmse_inf_wav
+
+rmse_inf_core <- error(df = inf, lags = c(2, 2), .H = 6, .K = 25, xreg = dummies)
+
+rmse_inf_ar <- error(df = inf, lags = c(2, 0), .H = 6, .K = 25, .var = "ar", xreg = dummies)
+
+rmse_inf_wav /  rmse_inf_ar
+rmse_inf_core /  rmse_inf_ar
+rmse_inf_wav / rmse_inf_core
+```
+
+As results above show, core inflation that exclude food and energy can help to predict inflation better than an AR model or the wavelet core inflation. A better wavelet model, however, can be selected. Wavelet methods use a lot of parameters. Then, the function `error_vin_wavmap()` can help one to select an appropriated specification based on forecasting criterion. This can be done in three steps.
+
+First, combine the wavelet parameters:
+
+```{r}
+wavmap <- wavsigmap::map_wav_args(list(
+  wf = c("haar", "la8"),
+  vscale = c("independent", "level"),
+  a = c(0.5, 1),
+  threshrule = c("median", "hard")
+))
+
+wavmap
+```
+
+Second, use `error_wavmap()` to get the RMSE for every possible wavelet model and filter to find  which one has the miminum RMSE: 
+
+```{r }
+inf_wav_best <- error_wavmap(wavmap,
+  df = inf[1], lags = c(2, 2), .H = 6, .K = 25,
+  xreg = dummies
+) %>%
+  dplyr::filter(dplyr::near(
+    mean, min(mean, na.rm = TRUE)
+  ))
+
+inf_wav_best
+```
+
+Finally, rerun `error()`: 
+
+```{r }
+rmse_inf_wav_best <- error(
+  df = inf[1], lags = c(2, 2), .H = 6, .K = 25,
+  wav = TRUE, xreg = dummies, 
+  wf = "haar", vscale = "level", 
+  a = 1, threshrule = "hard"
+)
+
+rmse_inf_wav_best / rmse_inf_ar
+rmse_inf_wav_best / rmse_inf_core
+
+```
+
+The wavelet core inflation selected on this way increases its forecast property. Further investigation of other parameters and/or wavelet shrinkage methods could improve the results.
+
+# Output Gap
+
+The evaluation of wavelet output gap in terms of the ability of its pseudo-real-time estimates to forecast future output growth is similar to the core inflation case. A particular forecast equation for an $h$-period ahead is:
+
+\begin{equation}
+y_{t + h} - y_t = \alpha + \gamma^w_0\hat{c}^w_t + \epsilon_{t+h},
+\end{equation}
+where $y$ is the natural log of real GDP and $\hat{c}^w$ is the estimated wavelet output gap.
+
+For $h = 2$, the previous equation can be estimated as:
+
+```{r}
+gdp_wav_best <- model(
+  df = gdp[1], lags = c(0, 0), .h = 2, 
+  wav = TRUE, .diff = TRUE, .var = "ar_out",
+  wf = "haar", vscale = "independent",
+  a = 1, threshrule = "hard"
+)$model
+```
+
+Note the inclusion of arguments `.diff = TRUE` and `.var = "ar_out"` as well `lags = c(0, 0)` that defines zero lag for wavelet gap. Even if lags were set to `lags = c(6, 0)`, for example, the first element of it is automacally adjust to zero when `.var = "ar_out"` is set.
+
+It is expected $\gamma^w_0 < 0$ at some horizon $h$. In this case, wavelet output gap helps to predict output growth:
+
+```{r}
+coef(gdp_wav_best)[2]
+```
+
+For the gap estimated from real potential GDP of the CBO’s estimate:
+
+```{r}
+gdp_gap <- model(
+  df = gdp, lags = c(0, 0), .h = 2,
+  .diff = TRUE, .var = "ar_out"
+)$model
+
+coef(gdp_gap)[2]
+```
+
+The analysis for forecast and mean error is similar to the core inflation case.
+
+## Phillips curve
+
+The package `wavdrcast` allows evaluation from a Phillips curve type of inflation forecasting. Pseudo-real time $h$-period ahead equation is:
+
+\begin{equation}
+\pi_{t + h} - \pi_t = \alpha + \sum_{i = 0}^{p}\beta_i\Delta\pi_{t-i} + \sum_{i = 0}^{q^w}\gamma^w_i\hat{c}^w_{t-i} + \epsilon_{t + h}
+\end{equation}
+
+The point here is that $y$ generates $\hat{c}^w$, not the dependent variable $\pi$. Then, $\hat{c}^w$ needs to be generated by another function for every out-of-sample observation. This is the job of `wavint()`:
+
+```{r}
+lgdp <- gdp[[1]]
+
+vin_wavgap <- wavint(x = lgdp, k = 24,
+  wf = "haar",
+  vscale = "level", a = 1,
+  threshrule = "hard"
+) %>%
+  dplyr::mutate_all(~ `-`(lgdp, .))
+
+tail(vin_wavgap[c(1, 23:25)])
+```
+
+This function constructed 25 estimatives of wavelet potencial gdp and the last part of the code above transformed them in outupt gap. The first column (lgdp24) of the tibble is the first out-of-sample data and (lgdp0) is the wavelet estimation using all data (the last out-of sample data). 
+
+For function compatibility, inflation data must have the same number of rows and columns of vin_wavgap object. To do that, the columns of quarterly cpi (infqtr) is repetead: 
+
+```{r echo=FALSE}
+infqtr <- tibble::tibble( infqtr = c(-1.244813278, 0.420168067, 0, -1.255230126, 0, 0.847457627, 
+2.521008403, 2.459016393, 3.2, 0.387596899, 0.772200772, 1.53256705, 
+-0.754716981, 0.760456274, 0.754716981, 0, -0.374531835, 0.751879699, 
+0.373134328, 0, 0, 0, -0.371747212, -0.373134328, 0, 0, 0.74906367, 
+-0.371747212, 0, 1.492537313, 0.735294118, 0.729927007, 0.724637681, 
+1.079136691, 0.711743772, 0.35335689, 1.408450704, 0.347222222, 
+0, 0, 0, 0.692041522, 0.687285223, 0.341296928, 0, 0.680272109, 
+0, 0.675675676, 0, 0, 0.67114094, 0, 0.333333333, 0.332225914, 
+0.662251656, 0, 0.328947368, 0.327868852, 0.326797386, 0.651465798, 
+0, 0.323624595, 0.322580645, 0.321543408, 0.320512821, 0.958466454, 
+0, 0.632911392, 0.943396226, 0.934579439, 0.925925926, 0.611620795, 
+0.303951368, 0.909090909, 0.900900901, 0.892857143, 1.179941003, 
+1.166180758, 1.152737752, 1.13960114, 1.690140845, 1.385041551, 
+1.366120219, 1.617250674, 1.326259947, 1.570680628, 1.030927835, 
+1.530612245, 0.502512563, 1.5, 0.492610837, 0.735294118, 0.729927007, 
+0.724637681, 0.959232614, 0.950118765, 1.882352941, 2.07852194, 
+2.262443439, 2.212389381, 3.463203463, 2.510460251, 3.265306122, 
+2.56916996, 1.541425819, 1.707779886, 1.865671642, 1.648351648, 
+0.720720721, 1.610017889, 1.408450704, 1.041666667, 2.233676976, 
+2.016806723, 1.153212521, 1.140065147, 2.093397746, 2.839116719, 
+1.993865031, 1.804511278, 3.101920236, 3.581661891, 3.181189488, 
+2.815013405, 4.43285528, 3.245942572, 1.571946796, 2.738095238, 
+2.549246813, 2.372881356, 2.869757174, 0.858369099, 0.531914894, 
+2.645502646, 0.927835052, -0.306435138, 0.307377049, 1.634320735, 
+1.206030151, 0.595829196, 1.283316881, 1.072124756, 1.253616201, 
+0.285714286, 1.044634378, 1.127819549, 0.650557621, 0.923361034, 
+-0.457456542, 0.643382353, 0.639269406, 0.272232305, 1.447963801, 
+1.248884924, 1.321585903, 0.347826087, 0.953206239, 1.287553648, 
+1.525423729, 0.584307179, 1.493775934, 1.471790679, 0.725221595, 
+0.88, 2.06185567, 0.932400932, 2.155504234, 0.828937453, 0.896860987, 
+0.740740741, 0.882352941, 0.510204082, 1.015228426, 0.646087581, 
+0.784593438, 0.42462845, 1.198026779, 0.557103064, 0.484764543, 
+0.482425913, 0.960219479, 0.543478261, 0.945945946, 0.200803213, 
+1.135604542, 0.72655218, 0.459016393, 0.195822454, 1.433224756, 
+0.642260758, 0.701978302, 0.506970849, 0.882723834, 0.1875, 0.561447286, 
+0.062034739, 0.557966522, 0.493218249, 0.36809816, 0.183374083, 
+0.67114094, 0.727272727, 1.022864019, 0.238237046, 1.723113488, 
+0.700934579, 0.754060325, 0.172711572, 1.264367816, 1.021566402, 
+0.168539326, -0.897363993, 1.188455008, 0.615212528, 0.611450806, 
+-0.055248619, 1.824212272, -0.271444083, 0.816548721, -0.485961123, 
+1.682040152, 1.227321238, 0.105429626, 0.210637177, 1.576458224, 
+0.620796689, 2.210796915, -1.006036217, 1.524390244, 1.551551552, 
+0, -0.542138985, 1.760158573, 1.460906151, 0.066234065, 0.741522375, 
+1.66257213, 2.47602188, -0.014624226, -3.910267251, 1.180147269, 
+1.402855544, 0.127959646, -0.009260588, 0.778887608, 0.153470783, 
+0.217466107, 0.338767345, 1.956391808, 1.00909754, 0.517007647, 
+-0.536385634, 1.648410082, 0.037490409, 0.840603457, -0.780443115, 
+1.381527084, 0.314039859, 0.276226531, -0.469786333, 1.391981944, 
+0.867566961, -0.130903782, -1.352344863, 0.556615505, 1.066834943, 
+-0.290398009, -0.596776566, 0.67942078, 1.211932878, 0.170111776, 
+0.001656809, 0.981228669, 0.473336861, 0.760956094, -0.119520782, 
+1.229089257, 0.975740721, 0.178579224, -0.477739177, 1.181771503, 
+0.763565983))
+
+vin_cpi <- rev(dplyr::bind_cols(rep(infqtr[1], 25)))
+vin_cpi
+```
+
+
+When data are in a vintage form, function `error_vin()` calculates RMSE and MAE. Then for `.K = 25` out-of-sample observations:
+
+```{r}
+rmse_gap_wav_vin <- error_vin(list(vin_cpi, vin_wavgap), lags = c(2, 2), 
+          .H = 6, .K = 25, .diff = TRUE,
+          )
+
+rmse_gap_wav_vin
+```
+
+Note that the wav argument is the default (`wav = FALSE`) because the wavelet variable is not generated by $\pi.$ Then, the same procedure could be used for every output gap estimation as those by HP filter or unobserved component model, for example. For HP filter, this can be done setting a function that mimics `wavint()`:
+
+```{r}
+hpvint <- function(x, k, ...) {
+  symx <- rlang::ensym(x)
+  names <- paste0(symx, "_hp", 0:k)
+  n <- length(x)
+  m <- matrix(nrow = n, ncol = k + 1)
+  for (i in 0:k) {
+    m[1:(n - i), i + 1] <- as.vector(mFilter::hpfilter(x[1:(n - i)], ...)$trend)
+  }
+  colnames(m) <- names
+  m <- m[,(k+1):1]
+  tibble::as_tibble(m)
+}
+```
+
+This function can be used to generate HP vintages:
+
+```{r}
+vin_hpgap <- hpvint(lgdp, 24,
+  freq = 1600, type = "lambda"
+) %>%
+  dplyr::mutate_all(~ `-`(lgdp, .))
+
+vin_hpgap
+```
+
+Then, mean error and comparison between the HP and wavelet gap can be made:
+
+```{r}
+rmse_gap_hp_vin <- error_vin(list(vin_cpi, vin_hpgap), lags = c(2, 2), 
+          .H = 6, .K = 25, .diff = TRUE,
+)
+
+rmse_gap_wav_vin / rmse_gap_hp_vin
+```
+
