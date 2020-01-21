@@ -219,7 +219,7 @@ The wavelet core inflation selected on this way increases its forecast property.
 
 # Output Gap
 
-The evaluation of wavelet output gap in terms of the ability of its pseudo-real-time estimates to forecast future output growth is similar to the core inflation case. A particular forecast equation for an $h$-period ahead is:
+The evaluation of the wavelet output gap in terms of the ability of its pseudo-real-time estimates to forecast future output growth is similar to the core inflation case. A particular forecast equation for an $h$-period ahead is:
 
 \begin{equation}
 y_{t + h} - y_t = \alpha + \gamma^w_0\hat{c}^w_t + \epsilon_{t+h},
@@ -237,7 +237,7 @@ gdp_wav_best <- model(
 )$model
 ```
 
-Note the inclusion of arguments `.diff = TRUE` and `.var = "ar_out"` as well `lags = c(0, 0)` that defines zero lag for wavelet gap. Even if lags were set to `lags = c(6, 0)`, for example, the first element of it is automacally adjust to zero when `.var = "ar_out"` is set.
+Note the inclusion of arguments `.diff = TRUE` and `.var = "ar_out"` as well `lags = c(0, 0)` that defines zero lag for wavelet gap. Even if lags were set to `lags = c(6, 0)`, for example, the first element of it would be automatically adjusted to zero when `.var = "ar_out"`.
 
 It is expected $\gamma^w_0 < 0$ at some horizon $h$. In this case, wavelet output gap helps to predict output growth:
 
@@ -256,7 +256,7 @@ gdp_gap <- model(
 coef(gdp_gap)[2]
 ```
 
-The analysis for forecast and mean error is similar to the core inflation case.
+The analysis for forecast and mean error is similar to the core inflation case analyzed above.
 
 ## Phillips curve
 

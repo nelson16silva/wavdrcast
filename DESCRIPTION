@@ -22,8 +22,9 @@ Imports:
     rlang,
     wavsigmap,
     stats,
-    forecast
-Remotes: nelson16silva/wavsigmap
+    forecast,
+    wavsigmap
+#Remotes: nelson16silva/wavsigmap
 Suggests: 
     knitr,
     rmarkdown,
