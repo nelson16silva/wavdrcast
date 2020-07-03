@@ -24,7 +24,7 @@ Imports:
     stats,
     forecast,
     wavsigmap
-#Remotes: nelson16silva/wavsigmap
+Remotes: nelson16silva/wavsigmap
 Suggests: 
     knitr,
     rmarkdown,
