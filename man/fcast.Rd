@@ -4,8 +4,17 @@
 \alias{fcast}
 \title{Direct Multistep Forecast}
 \usage{
-fcast(df, lags, .h, ic = BIC, .var = "all", .diff = FALSE,
-  wav = FALSE, xreg = NULL, ...)
+fcast(
+  df,
+  lags,
+  .h,
+  ic = BIC,
+  .var = "all",
+  .diff = FALSE,
+  wav = FALSE,
+  xreg = NULL,
+  ...
+)
 }
 \arguments{
 \item{df}{A data frame. The first column of the data frame

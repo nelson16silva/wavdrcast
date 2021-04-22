@@ -4,7 +4,8 @@
 \name{gdp}
 \alias{gdp}
 \title{Real Gross Domestic Product}
-\format{An object of class \code{tibble}. From 1949Qtr1 to 2019Qtr2.
+\format{
+An object of class \code{tibble}. From 1949Qtr1 to 2019Qtr2.
 
 \describe{
 \item{lgdp}{\emph{Log of real gross domestic product}. \code{lgdp}
@@ -19,7 +20,8 @@ GDP is the CBO’s estimate of the output the
 economy would produce with a high rate of use of its
 capital and labor resources. The data is adjusted to
 remove the effects of inflation.}
-}}
+}
+}
 \source{
 Series can be obtained  in: \cr
 \href{https://fred.stlouisfed.org/graph/?id=GDPC1,GDPPOT}{Federal Reserve Economic Data | FRED | St. Louis Fed}

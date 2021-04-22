@@ -4,8 +4,17 @@
 \alias{model}
 \title{Direct Model}
 \usage{
-model(df, lags, .h, ic = BIC, .var = "all", .diff = FALSE,
-  wav = FALSE, xreg = NULL, ...)
+model(
+  df,
+  lags,
+  .h,
+  ic = BIC,
+  .var = "all",
+  .diff = FALSE,
+  wav = FALSE,
+  xreg = NULL,
+  ...
+)
 }
 \arguments{
 \item{df}{A data frame. The first column of the data frame

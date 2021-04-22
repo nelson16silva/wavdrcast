@@ -4,8 +4,19 @@
 \alias{error_vin}
 \title{Forecast Error of the Direct Forecast From Vintage}
 \usage{
-error_vin(.vin, lags, .H, .K, ic = BIC, .var = "all", .diff = FALSE,
-  dev = "RMSE", wav = FALSE, xreg = NULL, ...)
+error_vin(
+  .vin,
+  lags,
+  .H,
+  .K,
+  ic = BIC,
+  .var = "all",
+  .diff = FALSE,
+  dev = "RMSE",
+  wav = FALSE,
+  xreg = NULL,
+  ...
+)
 }
 \arguments{
 \item{.vin}{List of data vintages (data frame) for each variable.

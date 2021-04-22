@@ -4,8 +4,19 @@
 \alias{error_vin_wavmap}
 \title{Forecast Error Mapping Wavelet Models for Vintages}
 \usage{
-error_vin_wavmap(x, .vin, lags, .H, .K, ic = BIC, .var = "all",
-  .diff = FALSE, dev = "RMSE", xreg = NULL, ...)
+error_vin_wavmap(
+  x,
+  .vin,
+  lags,
+  .H,
+  .K,
+  ic = BIC,
+  .var = "all",
+  .diff = FALSE,
+  dev = "RMSE",
+  xreg = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A tibble returned by the function

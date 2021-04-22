@@ -4,8 +4,19 @@
 \alias{error}
 \title{Forecast Error of the Direct Forecast}
 \usage{
-error(df, lags, .H, .K, ic = BIC, .var = "all", .diff = FALSE,
-  dev = "RMSE", wav = FALSE, xreg = NULL, ...)
+error(
+  df,
+  lags,
+  .H,
+  .K,
+  ic = BIC,
+  .var = "all",
+  .diff = FALSE,
+  dev = "RMSE",
+  wav = FALSE,
+  xreg = NULL,
+  ...
+)
 }
 \arguments{
 \item{df}{A data frame. The first column of the data frame

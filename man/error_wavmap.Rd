@@ -4,8 +4,19 @@
 \alias{error_wavmap}
 \title{Forecast Error Mapping Wavelet Models}
 \usage{
-error_wavmap(x, df, lags, .H, .K, ic = BIC, .var = "all",
-  .diff = FALSE, dev = "RMSE", xreg = NULL, ...)
+error_wavmap(
+  x,
+  df,
+  lags,
+  .H,
+  .K,
+  ic = BIC,
+  .var = "all",
+  .diff = FALSE,
+  dev = "RMSE",
+  xreg = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A tibble returned by the function \code{wavsigmap::\link[wavsigmap]{map_wav_args}}.}

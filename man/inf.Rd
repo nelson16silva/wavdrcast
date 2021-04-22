@@ -4,7 +4,8 @@
 \name{inf}
 \alias{inf}
 \title{US Inflation and Core Inflation Data}
-\format{An object of class (inherits from tbl, data.frame) with 598 rows and 2 columns.
+\format{
+An object of class (inherits from tbl, data.frame) with 598 rows and 2 columns.
 Monthly \% variation from 1970-01-01 to 2019-10-01.
 
 \describe{
@@ -14,7 +15,8 @@ not seasonally adjusted}
 
 \item{core}{\emph{Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average  (CPILFENS)}.
 Excludes food and energy. Based on Index 1982-1984=100, not seasonally adjusted}
-}}
+}
+}
 \source{
 Series can be obtained  in: \cr
 \href{https://fred.stlouisfed.org/graph/?id=CPIAUCNS,CPILFENS}{Federal Reserve Economic Data | FRED | St. Louis Fed}
