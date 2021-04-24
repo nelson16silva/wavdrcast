@@ -35,6 +35,8 @@ library(wavdrcast)
 
 See **wdrcast**’s vignette:
 
-vignette(“intro”, package = “wavdrcast”)
+``` r
+vignette("intro", package = "wavdrcast")
 
-browseVignettes(“wavdrcast”)
+browseVignettes("wavdrcast")
+```

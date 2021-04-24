@@ -46,6 +46,11 @@ library(wavdrcast)
 
 See **wdrcast**'s vignette:
 
+```{r, eval = FALSE}
 vignette("intro", package = "wavdrcast")
 
 browseVignettes("wavdrcast")
+```
+
+
+
