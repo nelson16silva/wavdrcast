@@ -44,4 +44,8 @@ devtools::install_github("nelson16silva/wavdrcast", build_vignettes = TRUE)
 library(wavdrcast)
 ```
 
-See **wdrcast**'s vignette.
+See **wdrcast**'s vignette:
+
+vignette("intro", package = "wavdrcast")
+
+browseVignettes("wavdrcast")
