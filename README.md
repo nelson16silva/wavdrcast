@@ -24,7 +24,7 @@ You can install the development version from
 
 ``` r
 # install.packages("wavdrcast")
-devtools::install_github("nelson16silva/wavdrcast")
+devtools::install_github("nelson16silva/wavdrcast", build_vignettes = TRUE)
 ```
 
 ## Example
