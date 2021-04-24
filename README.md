@@ -37,6 +37,5 @@ See **wdrcast**’s vignette:
 
 ``` r
 vignette("intro", package = "wavdrcast")
-
 browseVignettes("wavdrcast")
 ```
